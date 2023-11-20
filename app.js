@@ -1,49 +1,30 @@
+// app.js
 const express = require('express');
-const dotenv = require('dotenv');
 const compression = require('compression');
 const helmet = require('helmet');
 const userRoute = require('./routes/userRoute');
 const authRoutes = require('./routes/authRoute');
-const cors = require("cors") 
-const morgan = require("morgan")
-const cookieParser = require("cookie-parser")
-const mongoose = require("mongoose")
-const app = express();
+const { connectToDatabase } = require('./config/connection');
+const corsConfig = require('./config/corsConfig'); // Import the corsConfig middleware
+const morgan = require("morgan");
+const cookieParser = require("cookie-parser");
 
-dotenv.config();  
+const app = express();
 
 const PORT = process.env.PORT;
 
-mongoose.connect(process.env.MONGO_URL, { useNewUrlParser: true, useUnifiedTopology: true });
+// Connect to MongoDB
+const db = connectToDatabase();
 
-const db = mongoose.connection;
-
-db.on('error', (error) => {
-  console.error('MongoDB connection error:', error);
-});
-
-db.once('open', () => {
-  console.log('Connected to MongoDB');
-});
-
- 
-//middleware 
-app.use((req, res, next) => {  
-res.header("Access-Control-Allow-Credentials", true); 
-next();
-});
-app.use(express.json()); 
-app.use(
-cors({
-  origin: ["http://localhost:3000","https://liansocialmedia.ml"],
-})
-); 
-app.use(compression())
+// Middleware
+app.use(corsConfig); // Use the corsConfig middleware
+app.use(express.json());
+app.use(compression());
 app.use(cookieParser());
 app.use(express.json());
-app.use(helmet()); 
+app.use(helmet());
 app.use(morgan("common"));
- 
+
 // Use the route handlers from separate files
 app.use('/', userRoute);
 app.use('/', authRoutes);
