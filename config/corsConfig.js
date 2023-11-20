@@ -1,7 +1,7 @@
 // corsConfig.js
 const cors = require("cors");
 
-const allowedOrigins = ["http://localhost:3000", "https://liansocialmedia.ml"];
+const allowedOrigins = ["http://localhost:3000"];
 
 const corsOptions = {
   origin: function (origin, callback) {
