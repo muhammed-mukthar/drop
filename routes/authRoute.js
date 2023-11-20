@@ -15,10 +15,10 @@ const User = mongoose.model('User', {
 });
 
 const transporter = nodemailer.createTransport({
-  service: 'your_email_service',
+  service: 'gmail',
   auth: {
-    user: 'your_email_address',
-    pass: 'your_email_password',
+    user: 'ljtalksofficial@gmail.com',
+    pass: 'Lijoy@007',
   },
 });
 
