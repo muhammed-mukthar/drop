@@ -1,10 +1,7 @@
 import { Request, Response } from "express";
 import { ApiError } from "../helpers/helperFunctions";
 import { IUser, UserDoc } from "../models/User";
-import sharp from "sharp";
-import mime from "mime-types";
-import path from "path";
-
+import { userLogger } from "../utils/logger";
 import {
   deleteUserHandler,
   forgotPasswordHandler,
@@ -14,18 +11,18 @@ import {
   updateUserPasswordHandler,
 
 } from "../handlers/user";
-import { userLogger } from "../utils/logger";
-import { generateFileName } from "../utils/mutlerConfig";
+import { generateOTP, sendOtpEmail } from "../helpers/otpSender";
 
 // Register New User
 export const registerUserController = async (req: Request, res: Response) => {
   try {
     const userData: IUser = req.body;
-
+    const otp = generateOTP();
+    await sendOtpEmail(userData.email, otp);
     // Add data and send email
-    const data = await registerUserHandler(userData);
+    // const data = await registerUserHandler(userData);
 
-    return res.status(200).json({ success: true, data });
+    // return res.status(200).json({ success: true, data });
   } catch (err) {
     if (err instanceof ApiError) {
       return res
