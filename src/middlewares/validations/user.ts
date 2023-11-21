@@ -20,7 +20,7 @@ export const checkUserDoesntExists = async (
       ],
     });
 
-    console.log(isExist);
+    console.log(isExist,'User not exist');
 
     if (isExist) {
       if (isExist.isDeleted) {

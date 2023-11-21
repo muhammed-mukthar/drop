@@ -10,6 +10,49 @@ import { IUser, User, UserDoc } from "../models/User";
 import { bcryptCompare, hashPassword } from "../utils/bcrypt";
 import { sendEmail } from "../utils/email";
 import { userLogger } from "../utils/logger";
+import { IRegisteringUser, RegisteringUser } from "../models/RegisteringUser";
+
+export const verifyUserHandler = async (email: string, otp: string) => {
+  try {
+    const registeringUser = await RegisteringUser.findOne({ email: email });
+    if (!registeringUser) {
+      throw new ApiError("User Not found", 409);
+    }
+    if (registeringUser.otp != otp) {
+      throw new ApiError("Entered OTP is wrong", 409);
+    } else {
+      
+      const newUser: IUser = {...registeringUser.toObject(),
+        role: UserRole.Tenant,
+        isDeleted: false,
+        isVerified:true
+      };
+      const user: UserDoc = User.build(newUser);
+      let plainUser = await user.save();
+      const createdUser = plainUser.toObject();
+      const token = generateToken(createdUser);
+      const { password, ...userDetails } = createdUser;
+
+      const userInfo = { ...userDetails, jwtToken: token };
+
+      userLogger.info("user verified successFully");
+
+      return {
+        data: userInfo,
+      };
+    }
+  } catch (err) {
+    console.log(err,'error');
+    
+    userLogger.error(`error occurred on verifyUserHandler`, { err });
+
+    if (err instanceof ApiError) {
+      throw err;
+    }
+
+    throw new ApiError("Could not verify user", 500);
+  }
+};
 
 export const registerUserHandler = async (userData: IUser) => {
   try {

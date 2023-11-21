@@ -1,6 +1,11 @@
 import { Request, Response } from "express";
 import { ApiError } from "../helpers/helperFunctions";
 import { IUser, UserDoc } from "../models/User";
+import {
+  IRegisteringUser,
+  RegisteringUser,
+  RegisteringUserDoc,
+} from "../models/RegisteringUser";
 import { userLogger } from "../utils/logger";
 import {
   deleteUserHandler,
@@ -9,20 +14,92 @@ import {
   loginUserHandler,
   registerUserHandler,
   updateUserPasswordHandler,
-
+  verifyUserHandler,
 } from "../handlers/user";
 import { generateOTP, sendOtpEmail } from "../helpers/otpSender";
+import { hashPassword } from "../utils/bcrypt";
+
+//Verify Registering User Otp
+export const verifyOtpUserController = async (req: Request, res: Response) => {
+  try {
+    const { email, otp } = req.body;
+    const data = await verifyUserHandler(email,otp)
+    return res.status(200).json({ success: true, data });
+  } catch (err) {
+    if (err instanceof ApiError) {
+      return res
+        .status(err.status)
+        .json({ success: false, message: err.message });
+    }
+
+    return res.status(500).json({ success: false, message: err });
+  }
+};
+
+//resend otp
+export const resendOtpUserController = async (req:Request,res:Response) => {
+  try {
+    const { email } = req.body;
+    const otp = generateOTP();
+    await sendOtpEmail(email, otp);
+    return res.status(200).json({ success: true, message:'Successfully resend OTP' });
+  } catch (err) {
+    if (err instanceof ApiError) {
+      return res
+        .status(err.status)
+        .json({ success: false, message: err.message });
+    }
+    userLogger.error(`error occurred on resend otp`, { err });
+
+    return res.status(500).json({
+      success: false,
+      message: err,
+    });
+  }
+}
 
 // Register New User
 export const registerUserController = async (req: Request, res: Response) => {
   try {
-    const userData: IUser = req.body;
+    const userData: IRegisteringUser = req.body;
     const otp = generateOTP();
     await sendOtpEmail(userData.email, otp);
-    // Add data and send email
+
+    const hashedPassword = await hashPassword(userData.password); 
+
+    //check whether user exist in dummy collection
+    const userExist = await RegisteringUser.findOne({ email: userData.email });
+
+    let user: any; // :RegisteringUserDoc
+    if (userExist) {
+      await RegisteringUser.findOneAndReplace(
+        { _id: userExist._id },
+        {
+          ...userData,
+          password: hashedPassword,
+          otp,
+        }
+      );
+    } else {
+      user = new RegisteringUser({
+        ...userData,
+        password: hashedPassword,
+        otp,
+      });
+      await user.save();
+    }
+
+    const createdUser = userExist? userExist.toObject() : user.toObject();
+
     // const data = await registerUserHandler(userData);
 
-    // return res.status(200).json({ success: true, data });
+    const { password, ...userDetails } = createdUser;
+
+    const userInfo = { ...userDetails };
+
+    userLogger.info("user registered successFully");
+
+    return res.status(200).json({ success: true, data: userInfo });
   } catch (err) {
     if (err instanceof ApiError) {
       return res
@@ -34,7 +111,7 @@ export const registerUserController = async (req: Request, res: Response) => {
     return res.status(500).json({
       success: false,
       message: err,
-    }); //the err.message is only avaiable in apierror so i am adding err object
+    }); 
   }
 };
 
