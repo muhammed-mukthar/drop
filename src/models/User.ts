@@ -11,9 +11,15 @@ interface IUser {
   email: string;
   password: string;
   phone: number;
-  
-  isDeleted:boolean,
+  isDeleted: boolean;
 
+  username: string;
+  address: string;
+  district: string;
+  bloodGroup: string;
+  dob: Date;
+  lastDonatedDate: Date;
+  isVerified: boolean;
 }
 
 interface UserDoc extends mongoose.Document {
@@ -21,10 +27,15 @@ interface UserDoc extends mongoose.Document {
   email: string;
   password: string;
   phone: number;
- 
-  isDeleted:boolean,
+  isDeleted: boolean;
 
-
+  username: string;
+  address: string;
+  district: string;
+  bloodGroup: string;
+  dob: Date;
+  lastDonatedDate: Date;
+  isVerified: boolean;
 }
 
 interface UserModelInterface extends mongoose.Model<UserDoc> {
@@ -51,8 +62,33 @@ const UserSchema = new mongoose.Schema<UserDoc>(
     isDeleted:{
       type:Boolean,
       default:false
-    }
+    },
 
+    username: {
+      type: String,
+      required: true,
+      unique: true,
+    },
+    district: {
+      type: String,
+      required: true,
+    },
+    bloodGroup: {
+      type: String,
+      required: true,
+    },
+    dob: {
+      type: Date,
+      required: true,
+    },
+    lastDonatedDate: {
+      type: Date,
+      required: true,
+    },
+    isVerified: {
+      type: Boolean,
+      default: false,
+    }
   },
   { timestamps: true }
 );

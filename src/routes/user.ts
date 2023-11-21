@@ -14,6 +14,7 @@ import {
   userForgetPasswordController,
   userUpdatePasswordController,
   verifyJwtController,
+  verifyOtpUserController,
   viewProfileController,
 } from "../controllers/userController";
 import {
@@ -40,6 +41,9 @@ router.post(
   ValidateLogin,
   loginUserController
 );
+
+router.post('/verify-otp',verifyOtpUserController)
+router.post('/resend-otp',verifyOtpUserController)
 //this api will have previous and changing password previous password will be checked if it is valid
 router.post(
   "/change-password",
